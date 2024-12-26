@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Phone Number</title>
+    <style>
+        /* Optional styling for the error message and submit button */
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .disabled-button {
+            background-color: #ccc; /* Grey out the button */
+            cursor: not-allowed; /* Change cursor to indicate disabled */
+        }
+        .enabled-button {
+            background-color: #a9aeb3; /* Normal button color */
+            cursor: pointer; /* Change cursor to pointer for enabled button */
+        }
+    </style>
+    <script>
+        function validatePhone() {
+            const phoneInput = document.getElementById('phone');
+            const errorMessage = document.getElementById('error_message');
+            const submitButton = document.getElementById('submit_button');
+
+            // Clear previous error message
+            errorMessage.textContent = '';
+
+            // Check if phone number is at least 10 digits (excluding country code)
+            const phone = phoneInput.value.trim();
+            const phoneRegex = /^\+?\d{10,}$/; // Regex to match optional "+" followed by at least 10 digits
+
+            // Remove leading "+" if present for length check
+            const sanitizedPhone = phone.startsWith('+') ? phone.substring(1) : phone;
+
+            if (!phoneRegex.test(phone) || sanitizedPhone.length < 10) {
+                errorMessage.textContent = 'Phone number must be at least 10 digits long (excluding country code)';
+                submitButton.classList.add('disabled-button'); // Disable button
+                submitButton.classList.remove('enabled-button'); // Ensure normal button class is removed
+                submitButton.disabled = true; // Make button non-clickable
+            } else {
+                submitButton.classList.add('enabled-button'); // Enable button
+                submitButton.classList.remove('disabled-button'); // Ensure disabled button class is removed
+                submitButton.disabled = false; // Make button clickable
+            }
+        }
+
+        window.onload = function() {
+            // Ensure the button starts off as disabled on page load
+            validatePhone();
+        }
+    </script>
+</head>
+<body>
+    <h1>Add Phone </h1>
+    <% if (typeof error !== 'undefined') { %>
+        <p class="error"><%= error %></p>
+    <% } %>
+    <form action="/api/auth/add-phone-number" method="POST" onsubmit="return validatePhone()">
+        <label for="phone">Phone Number:</label>
+        <input type="text" id="phone" name="phone" required oninput="validatePhone()">
+        <p id="error_message" class="error"></p>
+        <button type="submit" id="submit_button" class="disabled-button" disabled>Submit</button>
+    </form>
+</body>
+</html>

@@ -1,40 +1,40 @@
-const jwt = require('jsonwebtoken');
+const { verifyToken } = require('../utils/tokenUtils');
+const { validateUser, validateLogin } = require('../utils/validation');
 
+// Middleware bảo vệ route
 const protect = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  const token = req.headers.authorization?.split(" ")[1]; // Lấy token từ header Authorization
 
   if (!token) {
-    return res.status(401).json({ message: "Không có token, yêu cầu đăng nhập" });
+    return res.status(401).json({ message: 'Không có token, yêu cầu đăng nhập.' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    // Giải mã token và lưu thông tin người dùng vào req.user
+    const decoded = verifyToken(token);
+    req.user = decoded;  // Lưu thông tin người dùng vào request để dùng trong các route sau
     next();
   } catch (error) {
-    res.status(401).json({ message: "Token không hợp lệ" });
+    return res.status(401).json({ message: 'Token không hợp lệ.' });
   }
 };
-
-const admin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Không có quyền truy cập' });
-  }
-  next();
-};
-
-const manager = (req, res, next) => {
-  if (req.user.role !== 'manager') {
-    return res.status(403).json({ message: 'Không có quyền truy cập' });
+// Middleware validate request cho đăng ký
+const validateRegister = (req, res, next) => {
+  const { error } = validateUser(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
   }
   next();
 };
 
-const employee = (req, res, next) => {
-  if (req.user.role !== 'employee') {
-    return res.status(403).json({ message: 'Không có quyền truy cập' });
+// Middleware validate request cho đăng nhập
+const validateLoginMiddleware = (req, res, next) => {
+  const { error } = validateLogin(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
   }
   next();
 };
 
-module.exports = { protect, admin, manager, employee };
+module.exports = { protect, validateRegister,
+  validateLoginMiddleware, };
