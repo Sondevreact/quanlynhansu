@@ -50,6 +50,30 @@ exports.validateUser = (data) => {
   return schema.validate(data);
 };
 
+// Validation for department data
+exports.validateDepartment = (data) => {
+  const schema = Joi.object({
+    name: Joi.string().min(3).required().messages({
+      'string.empty': 'Tên phòng ban không được để trống.',
+      'string.min': 'Tên phòng ban phải có ít nhất 3 ký tự.'
+    }),
+    description: Joi.string().optional().allow('').messages({
+      'string.base': 'Mô tả phải là một chuỗi ký tự.'
+    }),
+    managerId: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .optional()
+      .allow(null)
+      .messages({
+        'string.pattern.base': 'ID quản lý không hợp lệ.',
+      }),
+    deletedAt: Joi.date().optional().allow(null).messages({
+      'date.base': 'Trường deletedAt phải là ngày hợp lệ.'
+    }),
+  });
+
+  return schema.validate(data);
+};
 
 // Validate cho thông tin đăng nhập (login)
 exports.validateLogin = (data) => {

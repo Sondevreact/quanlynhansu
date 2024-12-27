@@ -1,6 +1,14 @@
 const { verifyToken } = require('../utils/tokenUtils');
 const { validateUser, validateLogin } = require('../utils/validation');
-
+// Middleware phân quyền theo vai trò
+const authorizeRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Forbidden: Bạn không có quyền truy cập vào tài nguyên này.' });
+    }
+    next();
+  };
+};
 // Middleware bảo vệ route
 const protect = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1]; // Lấy token từ header Authorization
@@ -37,4 +45,4 @@ const validateLoginMiddleware = (req, res, next) => {
 };
 
 module.exports = { protect, validateRegister,
-  validateLoginMiddleware, };
+  validateLoginMiddleware, authorizeRole  };

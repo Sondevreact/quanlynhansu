@@ -6,6 +6,15 @@ const jwt = require('jsonwebtoken');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+exports.googleLoginCallback = async (user) => {
+  const token = jwt.sign(
+    { id: user._id, email: user.email, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }   
+  );
+
+  return { message: 'Login successful', token, user };
+};
 
 exports.googleLogin = async (token) => {
   const ticket = await client.verifyIdToken({
@@ -85,12 +94,4 @@ exports.login = async (email, password) => {
   return { token, user };
 };
 
-exports.googleLoginCallback = async (user) => {
-  const token = jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' }   
-  );
 
-  return { message: 'Login successful', token, user };
-};

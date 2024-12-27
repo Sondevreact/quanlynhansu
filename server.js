@@ -16,7 +16,6 @@ const passport = require('passport');
 require('./middlewares/passportConfig');
 require('dotenv').config();
 
-
 connectDB();
 
 const app = express();
@@ -38,16 +37,15 @@ app.use(passport.session());
 // Sử dụng các middleware để xử lý body và CORS
 app.use(cors());  // Giúp ứng dụng có thể giao tiếp với các nguồn gốc khác
 app.use(express.json());  // Để xử lý body JSON
-app.use(bodyParser.urlencoded({ extended: true })); // Xử lý form-urlencoded
-app.use(bodyParser.json()); // Để phân tích cú pháp body JSON từ yêu cầu
-// Định tuyến API
+// app.use(bodyParser.urlencoded({ extended: true })); // Xử lý form-urlencoded
+// app.use(bodyParser.json()); 
+
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/departments', require('./routes/departmentRoutes'));
 // app.use('/api/projects', require('./routes/projectRoutes'));
 // app.use('/api/leaves', require('./routes/leaveRoutes'));
 
-// Lắng nghe yêu cầu từ client
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
