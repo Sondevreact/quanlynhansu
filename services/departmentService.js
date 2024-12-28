@@ -38,6 +38,10 @@ exports.updateDepartment = async (departmentId, departmentData) => {
     // Validate department data before update
     const { error } = validateDepartment(departmentData);
     if (error) throw new Error(error.details[0].message); // Throw error if validation fails
+    const existingDepartment = await Department.findOne({ name: departmentData.name });
+    if (existingDepartment) {
+      throw new Error('Phòng ban này đã tồn tại.');
+    }
 
     // Find and update the department
     const department = await Department.findByIdAndUpdate(departmentId, departmentData, { new: true });
@@ -51,19 +55,6 @@ exports.updateDepartment = async (departmentId, departmentData) => {
   }
 };
 
-// Xóa mềm phòng ban (soft delete)
-// exports.softDeleteDepartment = async (departmentId) => {
-//   try {
-//     const department = await Department.findByIdAndUpdate(
-//       departmentId,
-//       { deletedAt: new Date() }, // Gán giá trị deletedAt để đánh dấu phòng ban là đã bị xóa
-//       { new: true }
-//     );
-//     return department;
-//   } catch (error) {
-//     throw new Error(error.message);
-//   }
-// };
 exports.softDeleteDepartment = async (departmentId) => {
   try {
     // Kiểm tra nếu có dự án nào liên kết với phòng ban và chưa hoàn tất
@@ -146,6 +137,7 @@ exports.assignManagerToDepartment = async (departmentId, managerId) => {
     throw new Error(error.message);
   }
 };
+
 exports.addEmployeeToDepartment = async (departmentId, employeeId) => {
   try {
     // Tìm người dùng và kiểm tra vai trò
@@ -198,6 +190,35 @@ exports.removeEmployeeFromDepartment = async (departmentId, employeeId) => {
       user.departmentId = null;
       await user.save();
     }
+
+    return department;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+exports.removeManagerFromDepartment = async (departmentId, managerId) => {
+  try {
+    // Find the department by its ID
+    const department = await Department.findById(departmentId);
+    if (!department) {
+      throw new Error("Phòng ban không tồn tại.");
+    }
+    // Check if the manager is assigned to the department
+    if (department.managerId.toString() !== managerId) {
+      throw new Error('Người quản lý không thuộc phòng ban này.');
+    }
+    // Remove the manager from the department (set managerId to null)
+    department.managerId = null;
+    await department.save();
+
+    // Update the User model to remove the departmentId from the manager
+    const user = await User.findById(managerId);
+    if (!user) {
+      throw new Error('Người dùng không hợp lệ.');
+    }
+    user.departmentId = null;
+    await user.save();
 
     return department;
   } catch (error) {

@@ -20,6 +20,8 @@ router.delete('/:id', protect, authorizeRole('admin'), departmentController.dele
 router.put('/restore/:id', protect, authorizeRole('admin'), departmentController.restoreDepartment);
 
 // Xóa nhân viên khỏi phòng ban
+router.delete('/:departmentId/manager/:managerId', departmentController.removeManagerFromDepartment);
+
 router.put('/remove-employee', protect, authorizeRole('admin', 'manager'), departmentController.removeEmployee);
 
 router.put('/:departmentId/employee/:employeeId', protect, authorizeRole('admin', 'manager'),departmentController.addEmployee);

@@ -66,10 +66,8 @@ exports.assignManager = async (req, res) => {
     if (!departmentId || !managerId) {
       return res.status(400).json({ message: 'Thiếu thông tin departmentId hoặc managerId.' });
     }
-
     // Gọi service để gán manager
     const updatedDepartment = await departmentService.assignManagerToDepartment(departmentId, managerId);
-
     res.status(200).json(updatedDepartment);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -105,5 +103,20 @@ exports.removeEmployee = async (req, res) => {
     res.status(200).json(updatedDepartment);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+exports.removeManagerFromDepartment = async (req, res) => {
+  try {
+    const { departmentId, managerId } = req.params;
+    const department = await departmentService.removeManagerFromDepartment(departmentId, managerId);
+    res.status(200).json({
+      message: 'Người quản lý đã được xóa khỏi phòng ban thành công.',
+      department
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message
+    });
   }
 };

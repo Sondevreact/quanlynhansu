@@ -1,6 +1,9 @@
 const User = require('../models/User');
+const Project = require('../models/Project'); // Giả sử bạn có mô hình Project
+const Department = require('../models/Department'); // Import Department model
+
 const { hashPassword, generateToken } = require('../utils/tokenUtils'); // Giả sử bạn có các hàm này
-const { validateUser } = require('../utils/validation'); // Hàm validate user
+const { validateUser ,validateUserUpdate} = require('../utils/validation'); // Hàm validate user
 // Lấy danh sách tất cả User (không lấy người dùng đã bị xóa mềm)
 exports.getAllUsers = async () => {
   try {
@@ -58,33 +61,105 @@ exports.createUser = async (userData) => {
   }
 };
 
-// Cập nhật User
+
+
 exports.updateUser = async (userId, userData) => {
   try {
-    const user = await User.findByIdAndUpdate(userId, userData, { new: true });
+    
+    // Validate the user data (similar to createUser)
+    const { error } = validateUserUpdate(userData);
+    if (error) throw new Error(error.details[0].message);
+
+    // Kiểm tra xem người dùng có tồn tại không
+    const user = await User.findById(userId);
     if (!user) {
       throw new Error("User not found");
     }
-    return user;
+
+    // Kiểm tra nếu người dùng đang là manager và muốn thay đổi vai trò
+    if (user.role === 'manager' && userData.role !== 'manager') {
+      // Kiểm tra các dự án mà người dùng đang quản lý
+      const projectsManagedByUser = await Project.find({ managerId: userId });
+
+      // Nếu người dùng đang quản lý ít nhất một dự án, thông báo yêu cầu admin gỡ khỏi quản lý trước
+      if (projectsManagedByUser.length > 0) {
+        const projectNames = projectsManagedByUser.map(project => project.name).join(', ');
+        throw new Error(`User đang quản lý các dự án: ${projectNames}. Vui lòng gỡ người dùng khỏi các dự án này trước khi thay đổi vai trò.`);
+      }
+
+      // Kiểm tra nếu người dùng là manager của phòng ban
+      if (user.departmentId) {
+        const departmentsManagedByUser = await Department.find({ managerId: userId });
+
+        // Nếu người dùng quản lý ít nhất một phòng ban, thông báo yêu cầu admin gỡ khỏi phòng ban trước
+        if (departmentsManagedByUser.length > 0) {
+          const departmentNames = departmentsManagedByUser.map(department => department.name).join(', ');
+          throw new Error(`User đang quản lý các phòng ban: ${departmentNames}. Vui lòng gỡ người dùng khỏi các phòng ban này trước khi thay đổi vai trò.`);
+        }
+      }
+    }
+
+    // Kiểm tra xem email hoặc số điện thoại có bị trùng không (nếu có thay đổi)
+    const { email, phone } = userData;
+    if (email && email !== user.email) {
+      const existingUserByEmail = await User.findOne({ email });
+      if (existingUserByEmail) throw new Error("Email này đã được đăng ký.");
+    }
+
+    if (phone && phone !== user.phone) {
+      const existingUserByPhone = await User.findOne({ phone });
+      if (existingUserByPhone) throw new Error("Số điện thoại này đã được đăng ký.");
+    }
+
+    // Tiến hành cập nhật người dùng nếu không có vấn đề gì
+    const updatedUser = await User.findByIdAndUpdate(userId, userData, { new: true });
+
+    if (!updatedUser) {
+      throw new Error("User update failed");
+    }
+
+    return { status: 'success', updatedUser };
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-// Xóa mềm User (soft delete)
+
 exports.softDeleteUser = async (userId) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    // Kiểm tra xem người dùng có tồn tại không
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Kiểm tra xem người dùng có thuộc phòng ban nào không
+    if (user.departmentId) {
+      throw new Error("User must be removed from the department before soft deleting");
+    }
+ // Kiểm tra xem người dùng có phải là quản lý dự án nào không
+    const projectsManagedByUser = await Project.find({ managerId: userId });
+    if (projectsManagedByUser.length > 0) {
+      throw new Error("User is a manager in one or more projects. Remove the user as manager before soft deleting.");
+    }
+    // Kiểm tra xem người dùng có thuộc dự án nào không
+    const userInProjects = await Project.find({ managerId: userId, members: userId });
+    if (userInProjects.length > 0) {
+      throw new Error("User must be removed from the projects before soft deleting");
+    }
+
+    // Tiến hành xóa mềm người dùng
+    const deletedUser = await User.findByIdAndUpdate(
       userId,
       { deletedAt: new Date() },
       { new: true }
     );
-    return user;
+
+    return deletedUser;
   } catch (error) {
     throw new Error(error.message);
   }
 };
-
 // Khôi phục User (restore soft delete)
 exports.restoreUser = async (userId) => {
   try {

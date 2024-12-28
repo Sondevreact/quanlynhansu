@@ -18,10 +18,10 @@ exports.validateUser = (data) => {
       'any.only': 'Vai trò không hợp lệ (chỉ chấp nhận admin, employee, hoặc manager).',
       'string.empty': 'Vai trò không được để trống.'
     }),
-    departmentId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-      'string.pattern.base': 'Department ID không hợp lệ.',
-      'string.empty': 'Department ID không được để trống.'
-    }),
+    // departmentId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
+    //   'string.pattern.base': 'Department ID không hợp lệ.',
+    //   'string.empty': 'Department ID không được để trống.'
+    // }),
     position: Joi.string().required().messages({
       'string.empty': 'Chức vụ không được để trống.'
     }),
@@ -44,6 +44,59 @@ exports.validateUser = (data) => {
     isActive: Joi.boolean().required().messages({
       'boolean.base': 'Trạng thái hoạt động không hợp lệ.',
       'any.required': 'Trạng thái hoạt động là bắt buộc.'
+    })
+  });
+
+  return schema.validate(data);
+};
+const stripFields = () => ({
+  _id: Joi.any().strip(),
+  departmentId: Joi.any().strip(),
+  deletedAt: Joi.any().strip(),
+  createdAt: Joi.any().strip(),
+  updatedAt: Joi.any().strip(),
+  __v: Joi.any().strip()
+});
+
+exports.validateUserUpdate = (data) => {
+  const schema = Joi.object({
+    ...stripFields(),
+    fullName: Joi.string().min(3).max(50).optional().messages({
+      'string.min': 'Tên phải có ít nhất 3 ký tự.',
+      'string.max': 'Tên không được dài quá 50 ký tự.'
+    }),
+    email: Joi.string().email().optional().messages({
+      'string.email': 'Email không hợp lệ.'
+    }),
+    password: Joi.string().min(6).optional().messages({
+      'string.min': 'Mật khẩu phải có ít nhất 6 ký tự.'
+    }),
+    role: Joi.string().valid('admin', 'employee', 'manager').optional().messages({
+      'any.only': 'Vai trò không hợp lệ (chỉ chấp nhận admin, employee, hoặc manager).'
+    }),
+    position: Joi.string().optional().messages({
+      'string.empty': 'Chức vụ không hợp lệ.'
+    }),
+    phone: Joi.string().pattern(/^[0-9]{10,11}$/).optional().messages({
+      'string.pattern.base': 'Số điện thoại phải là 10 hoặc 11 chữ số.'
+    }),
+    dateOfJoining: Joi.date().optional().messages({
+      'date.base': 'Ngày gia nhập không hợp lệ.'
+    }),
+    dob: Joi.date()
+    .max(new Date(new Date().setFullYear(new Date().getFullYear() - 18)))
+    .required()
+    .messages({
+      'date.max': 'Người dùng phải ít nhất 18 tuổi.',
+      'date.base': 'Ngày sinh không hợp lệ.',
+      'date.empty': 'Ngày sinh không được để trống.'
+    }),  
+    address: Joi.string().optional().messages({
+      'string.empty': 'Địa chỉ không hợp lệ.'
+    }),
+   
+    isActive: Joi.boolean().optional().messages({
+      'boolean.base': 'Trạng thái hoạt động không hợp lệ.'
     })
   });
 

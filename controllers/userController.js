@@ -1,4 +1,6 @@
 const userService = require("../services/userService");
+const departmentService = require("../services/departmentService"); // Giả sử bạn có service cho phòng ban
+const projectService = require("../services/projectService"); // Giả sử bạn có service cho dự án
 
 // Lấy danh sách tất cả User
 exports.getAllUsers = async (req, res) => {

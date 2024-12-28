@@ -3,6 +3,7 @@ const { validateUser, validateLogin } = require('../utils/validation');
 const { generateToken, hashPassword } = require('../utils/tokenUtils');
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
