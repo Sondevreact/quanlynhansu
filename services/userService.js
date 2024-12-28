@@ -135,17 +135,17 @@ exports.softDeleteUser = async (userId) => {
 
     // Kiểm tra xem người dùng có thuộc phòng ban nào không
     if (user.departmentId) {
-      throw new Error("User must be removed from the department before soft deleting");
+      throw new Error("Người dùng phải được xóa khỏi phòng ban trước khi xóa");
     }
  // Kiểm tra xem người dùng có phải là quản lý dự án nào không
     const projectsManagedByUser = await Project.find({ managerId: userId });
     if (projectsManagedByUser.length > 0) {
-      throw new Error("User is a manager in one or more projects. Remove the user as manager before soft deleting.");
+      throw new Error("Người dùng là người quản lý trong một dự án. Xóa chức vụ trước khi xóa.");
     }
     // Kiểm tra xem người dùng có thuộc dự án nào không
     const userInProjects = await Project.find({ managerId: userId, members: userId });
     if (userInProjects.length > 0) {
-      throw new Error("User must be removed from the projects before soft deleting");
+      throw new Error("Người dùng phải được xóa khỏi dự án trước khi xóa mềm");
     }
 
     // Tiến hành xóa mềm người dùng

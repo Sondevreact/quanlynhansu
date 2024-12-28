@@ -25,7 +25,6 @@ exports.login = async (req, res) => {
     const { token, user } = await authService.login(req.body.email, req.body.password);
     res.json({ message: 'Đăng nhập thành công.', token, user });
   } catch (error) {
-    console.error('Login error:', error);
     res.status(400).json({ message: error.message });
   }
 };
